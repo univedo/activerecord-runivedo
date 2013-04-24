@@ -8,6 +8,10 @@ ActiveRecord::Base.establish_connection(
 
 describe 'Setup' do
   it 'connects to univedo' do
-    
+    # class Table < ActiveRecord::Base
+    # end
+
+    # p Table.first
+    p ActiveRecord::Base::connection.execute("SELECT * FROM tables")
   end
 end
