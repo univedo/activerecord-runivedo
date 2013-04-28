@@ -10,10 +10,9 @@ module ActiveRecord
       raise ArgumentError, "No univedo url specified. Missing argument: url" unless config[:url]
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
-      conn = Runivedo::Connection.new(config[:url])
-      perspective = conn.get_perspective(config[:app])
+      perspective = Runivedo::Connection.new(config[:url]).get_perspective(config[:app])
 
-      ConnectionAdapters::RunivedoAdapter.new(conn, perspective, logger, config)
+      ConnectionAdapters::RunivedoAdapter.new(perspective, logger, config)
     end
   end
 
@@ -31,53 +30,16 @@ module ActiveRecord
         end
       end
 
-      class StatementPool < ConnectionAdapters::StatementPool
-        def initialize(connection, max)
-          super
-          @cache = Hash.new { |h,pid| h[pid] = {} }
-        end
-
-        def each(&block); cache.each(&block); end
-        def key?(key);    cache.key?(key); end
-        def [](key);      cache[key]; end
-        def length;       cache.length; end
-
-        def []=(sql, key)
-          while @max <= cache.size
-            dealloc(cache.shift.last[:stmt])
-          end
-          cache[sql] = key
-        end
-
-        def clear
-          cache.values.each do |hash|
-            dealloc hash[:stmt]
-          end
-          cache.clear
-        end
-
-        private
-        def cache
-          @cache[$$]
-        end
-
-        def dealloc(stmt)
-          stmt.close unless stmt.closed?
-        end
-      end
-
       class BindSubstitution < Arel::Visitors::SQLite # :nodoc:
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(connection, perspective, logger, config)
-        super(connection, logger)
-        @perspective = perspective
+      def initialize(perspective, logger, config)
+        super(perspective.query, logger)
 
         @active     = nil
-        @statements = StatementPool.new(@connection,
-                                        self.class.type_cast_config_to_integer(config.fetch(:statement_limit) { 1000 }))
         @config = config
+        @perspective = perspective
 
         if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
           @visitor = Arel::Visitors::SQLite.new self
@@ -102,11 +64,6 @@ module ActiveRecord
         @connection.close rescue nil
       end
 
-      # Clears the prepared statements cache.
-      def clear_cache!
-        @statements.clear
-      end
-
       def native_database_types #:nodoc:
         {
           :primary_key => default_primary_key_type,
@@ -128,27 +85,15 @@ module ActiveRecord
 
       def exec_query(sql, name = nil, binds = [])
         log(sql, name, binds) do
-
-          # Don't cache statements without bind values
-          if binds.empty?
-            stmt    = @connection.prepare(sql)
-            cols    = stmt.columns
-            records = stmt.to_a
-            stmt.close
-            stmt = records
-          else
-            cache = @statements[sql] ||= {
-              :stmt => @connection.prepare(sql)
-            }
-            stmt = cache[:stmt]
-            cols = cache[:cols] ||= stmt.columns
-            stmt.reset!
-            stmt.bind_params binds.map { |col, val|
-              type_cast(val, col)
-            }
-          end
-
-          ActiveRecord::Result.new(cols, stmt.to_a)
+          stmt    = @connection.prepare(sql)
+          cols    = stmt.get_column_names
+          i = -1
+          stmt.bind_params(Hash[binds.map { |col, val|
+            [i += 1, bind[1]]
+          }])
+          records = stmt.execute.to_a
+          # stmt.close
+          ActiveRecord::Result.new(cols, records)
         end
       end
 
@@ -164,9 +109,7 @@ module ActiveRecord
 
       def execute(sql, name = nil) #:nodoc:
         log(sql, name) do
-          q = @perspective.query
-          q.prepare(sql)
-          q.execute
+          @connection.execute(sql).to_a
         end
       end
 
@@ -190,10 +133,27 @@ module ActiveRecord
         exec_query(sql, name).rows
       end
 
-      protected
-        def select(sql, name = nil, binds = []) #:nodoc:
-          exec_query(sql, name, binds)
+      # SCHEMA STATEMENTS ========================================
+
+      def tables(name = nil, table_name = nil) #:nodoc:
+        @perspective.get_tables.each_key.to_a
+      end
+
+      def primary_key(table_name)
+        "#id"
+      end
+
+      def columns(table_name)
+        @perspective.get_tables[table_name].get_fields.map do |name, field|
+          Column.new(name, nil, field.get_sql_datatype)
         end
+      end
+
+      protected
+
+      def select(sql, name = nil, binds = []) #:nodoc:
+        exec_query(sql, name, binds)
+      end
     end
   end
 end
