@@ -10,7 +10,7 @@ module ActiveRecord
       raise ArgumentError, "No univedo url specified. Missing argument: url" unless config[:url]
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
-      perspective = Runivedo::Connection.new(config[:url]).get_perspective(config[:app])
+      perspective = Runivedo::Connection.new(config[:url], 0x2610 => "marvin").get_perspective(config[:app])
 
       ConnectionAdapters::RunivedoAdapter.new(perspective, logger, config)
     end
@@ -88,9 +88,9 @@ module ActiveRecord
           stmt    = @connection.prepare(sql)
           cols    = stmt.get_column_names
           i = -1
-          stmt.bind_params(Hash[binds.map { |col, val|
-            [i += 1, bind[1]]
-          }])
+          # stmt.bind_params(Hash[binds.map { |col, val|
+          #   [i += 1, bind[1]]
+          # }])
           records = stmt.execute.to_a
           # stmt.close
           ActiveRecord::Result.new(cols, records)
@@ -109,7 +109,7 @@ module ActiveRecord
 
       def execute(sql, name = nil) #:nodoc:
         log(sql, name) do
-          @connection.execute(sql).to_a
+          @connection.prepare(sql).execute.to_a
         end
       end
 
