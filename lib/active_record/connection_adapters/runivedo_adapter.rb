@@ -13,7 +13,6 @@ module ActiveRecord
       session = Runivedo::Connection.new(config[:url], 0x2610 => "marvin")
       session.set_perspective(config[:uts]) if config[:uts]
       perspective = session.get_perspective(config[:app])
-
       ConnectionAdapters::RunivedoAdapter.new(perspective, logger, config)
     end
   end
@@ -86,14 +85,17 @@ module ActiveRecord
       # DATABASE STATEMENTS ======================================
 
       def exec_query(sql, name = nil, binds = [])
+        p "exec_query"
+        p binds
         log(sql, name, binds) do
           stmt    = @connection.prepare(sql)
           cols    = stmt.get_column_names
           i = -1
-          # stmt.bind_params(Hash[binds.map { |col, val|
-          #   [i += 1, bind[1]]
-          # }])
-          records = stmt.execute.to_a
+          binds_hash = Hash[binds.map { |col, val|
+            [i += 1, bind[1]]
+          }]
+          p binds_hash
+          records = stmt.execute(binds_hash).to_a
           # stmt.close
           ActiveRecord::Result.new(cols, records)
         end
