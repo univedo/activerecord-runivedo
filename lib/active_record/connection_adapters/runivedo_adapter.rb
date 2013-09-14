@@ -10,7 +10,9 @@ module ActiveRecord
       raise ArgumentError, "No univedo url specified. Missing argument: url" unless config[:url]
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
-      perspective = Runivedo::Connection.new(config[:url], 0x2610 => "marvin").get_perspective(config[:app])
+      session = Runivedo::Connection.new(config[:url], 0x2610 => "marvin")
+      session.set_perspective(config[:uts]) if config[:uts]
+      perspective = session.get_perspective(config[:app])
 
       ConnectionAdapters::RunivedoAdapter.new(perspective, logger, config)
     end
