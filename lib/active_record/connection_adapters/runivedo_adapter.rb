@@ -85,8 +85,6 @@ module ActiveRecord
       # DATABASE STATEMENTS ======================================
 
       def exec_query(sql, name = nil, binds = [])
-        p "exec_query"
-        p binds
         log(sql, name, binds) do
           stmt    = @connection.prepare(sql)
           cols    = stmt.get_column_names
@@ -94,7 +92,6 @@ module ActiveRecord
           binds_hash = Hash[binds.map { |col, val|
             [i += 1, bind[1]]
           }]
-          p binds_hash
           records = stmt.execute(binds_hash).to_a
           # stmt.close
           ActiveRecord::Result.new(cols, records)
