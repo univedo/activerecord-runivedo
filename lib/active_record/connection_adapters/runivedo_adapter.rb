@@ -19,6 +19,8 @@ module ActiveRecord
 
   module ConnectionAdapters #:nodoc:
     class RunivedoAdapter < AbstractAdapter
+      attr_reader :perspective
+
       class Version
         include Comparable
 
@@ -137,7 +139,7 @@ module ActiveRecord
       # SCHEMA STATEMENTS ========================================
 
       def tables(name = nil, table_name = nil) #:nodoc:
-        @perspective.get_tables.each_key.to_a
+        @perspective.get_tables.map {|name, table| table.close; name}
       end
 
       def primary_key(table_name)
