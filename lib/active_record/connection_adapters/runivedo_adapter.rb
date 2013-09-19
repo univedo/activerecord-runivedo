@@ -95,9 +95,10 @@ module ActiveRecord
           binds_hash = Hash[binds.map { |col, val|
             [i += 1, val]
           }]
+          @result.close if @result
           @result = stmt.execute(binds_hash)
           records = @result.to_a
-          # stmt.close
+          stmt.close
           ActiveRecord::Result.new(cols, records)
         end
       end
