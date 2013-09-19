@@ -41,6 +41,7 @@ module ActiveRecord
         super(perspective.query, logger)
 
         @active     = nil
+        @result     = nil
         @config = config
         @perspective = perspective
 
@@ -92,9 +93,10 @@ module ActiveRecord
           cols    = stmt.get_column_names
           i = -1
           binds_hash = Hash[binds.map { |col, val|
-            [i += 1, bind[1]]
+            [i += 1, val]
           }]
-          records = stmt.execute(binds_hash).to_a
+          @result = stmt.execute(binds_hash)
+          records = @result.to_a
           # stmt.close
           ActiveRecord::Result.new(cols, records)
         end
@@ -107,7 +109,8 @@ module ActiveRecord
       alias :exec_update :exec_delete
 
       def last_inserted_id(result)
-        @connection.last_insert_row_id
+        raise "didn't insert anything" unless @result
+        @result.last_inserted_id
       end
 
       def execute(sql, name = nil) #:nodoc:
