@@ -11,14 +11,15 @@ module ActiveRecord
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
       session = Runivedo::Connection.new(config[:url], 0x2610 => "marvin")
-      session.set_perspective(config[:uts]) if config[:uts]
+      session.set_perspective(IO.read(config[:uts])) if config[:uts]
       perspective = session.get_perspective(config[:app])
-      ConnectionAdapters::RunivedoAdapter.new(perspective, logger, config)
+      ConnectionAdapters::RunivedoAdapter.new(session, perspective, logger, config)
     end
   end
 
   module ConnectionAdapters #:nodoc:
     class RunivedoAdapter < AbstractAdapter
+      attr_reader :session
       attr_reader :perspective
 
       class Version
@@ -37,12 +38,13 @@ module ActiveRecord
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(perspective, logger, config)
+      def initialize(session, perspective, logger, config)
         super(perspective.query, logger)
 
-        @active     = nil
-        @result     = nil
-        @config = config
+        @active      = nil
+        @result      = nil
+        @config      = config
+        @session     = session
         @perspective = perspective
 
         if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
