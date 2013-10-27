@@ -149,7 +149,7 @@ module ActiveRecord
       end
 
       def primary_key(table_name)
-        "#id"
+        "id"
       end
 
       def columns(table_name)
