@@ -45,7 +45,12 @@ module ActiveRecord
         @app = app
         @uts = uts
         @result = nil
-        @visitor = unprepared_visitor
+
+        if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
+          @visitor = Arel::Visitors::SQLite.new self
+        else
+          @visitor = unprepared_visitor
+        end
 
         connect
       end
