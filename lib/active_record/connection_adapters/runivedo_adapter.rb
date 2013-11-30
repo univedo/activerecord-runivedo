@@ -62,6 +62,7 @@ module ActiveRecord
         @session = Runivedo::Connection.new(@url, 0x2610 => "marvin")
         @session.set_perspective(@uts) if @uts
         @perspective = session.get_perspective(@app)
+        @connection = @perspective.query
       end
 
       # Disconnects from the database if already connected. Otherwise, this
