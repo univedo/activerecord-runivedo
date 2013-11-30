@@ -13,7 +13,7 @@ module ActiveRecord
       url = config[:url]
       app = config[:app]
       uts = config[:uts] ? IO.read(config[:uts]) : nil
-      ConnectionAdapters::RunivedoAdapter.new(url, app, uts, logger)
+      ConnectionAdapters::RunivedoAdapter.new(url, app, uts, logger, config)
     end
   end
 
@@ -38,7 +38,7 @@ module ActiveRecord
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(url, app, uts, logger)
+      def initialize(url, app, uts, logger, config)
         super(nil, logger)
 
         @url = url
