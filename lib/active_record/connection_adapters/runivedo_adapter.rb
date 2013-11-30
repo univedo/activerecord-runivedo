@@ -10,10 +10,10 @@ module ActiveRecord
       raise ArgumentError, "No univedo url specified. Missing argument: url" unless config[:url]
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
-      session = Runivedo::Connection.new(config[:url], 0x2610 => "marvin")
-      session.set_perspective(IO.read(config[:uts])) if config[:uts]
-      perspective = session.get_perspective(config[:app])
-      ConnectionAdapters::RunivedoAdapter.new(session, perspective, logger, config)
+      url = config[:url]
+      app = config[:app]
+      uts = config[:uts] ? IO.read(config[:uts]) : nil
+      ConnectionAdapters::RunivedoAdapter.new(url, app, uts, logger)
     end
   end
 
@@ -38,20 +38,16 @@ module ActiveRecord
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(session, perspective, logger, config)
-        super(perspective.query, logger)
+      def initialize(url, app, uts, logger)
+        super(nil, logger)
 
-        @active      = nil
-        @result      = nil
-        @config      = config
-        @session     = session
-        @perspective = perspective
+        @url = url
+        @app = app
+        @uts = uts
+        @result = nil
+        @visitor = unprepared_visitor
 
-        if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
-          @visitor = Arel::Visitors::SQLite.new self
-        else
-          @visitor = unprepared_visitor
-        end
+        connect
       end
 
       def adapter_name #:nodoc:
@@ -59,15 +55,26 @@ module ActiveRecord
       end
 
       def active?
-        @active != false
+        @session.open?
+      end
+
+      def connect
+        @session = Runivedo::Connection.new(@url, 0x2610 => "marvin")
+        @session.set_perspective(@uts) if @uts
+        @perspective = session.get_perspective(@app)
       end
 
       # Disconnects from the database if already connected. Otherwise, this
       # method does nothing.
       def disconnect!
         super
-        @active = false
-        @connection.close rescue nil
+        @session.close rescue nil
+      end
+
+      def reconnect!
+        super
+        disconnect! rescue nil
+        connect
       end
 
       def native_database_types #:nodoc:
