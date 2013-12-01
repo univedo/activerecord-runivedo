@@ -120,7 +120,7 @@ module ActiveRecord
 
       def exec_delete(sql, name = 'SQL', binds = [])
         exec_query(sql, name, binds)
-        @connection.changes
+        @result.num_affected_rows
       end
       alias :exec_update :exec_delete
 
@@ -137,7 +137,7 @@ module ActiveRecord
 
       def update_sql(sql, name = nil) #:nodoc:
         super
-        @connection.changes
+        @result.num_affected_rows
       end
 
       def delete_sql(sql, name = nil) #:nodoc:
