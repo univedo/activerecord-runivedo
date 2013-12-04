@@ -1,29 +1,21 @@
-# Activerecord::Runivedo
-
-TODO: Write a gem description
+# Activerecord Univedo Adapter
 
 ## Installation
 
-Add this line to your application's Gemfile:
+In your `Gemfile`:
 
     gem 'activerecord-runivedo'
 
-And then execute:
+Create your app's data perspective in [USpec](https://spec.univedo.com) and download it as an XML file to a file called `perspective.xml` in your Rails folder.
 
-    $ bundle
+In your `config/database.yml`:
 
-Or install it yourself as:
+    development:
+      adapter: runivedo
+      url: ws://localhost:9000/f8018f09-fb75-4d3d-8e11-44b2dc796130
+      app: <your app uuid>
+      uts: perspective.xml # The file you downloaded before
 
-    $ gem install activerecord-runivedo
+Since we're using a perspective from USpec we don't need Rails migrations. Create a file under `config/initializers/disable_migrations.rb` with the contents
 
-## Usage
-
-TODO: Write usage instructions here
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+    Rails.configuration.middleware.delete ::ActiveRecord::Migration::CheckPending
