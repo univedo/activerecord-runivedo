@@ -19,8 +19,7 @@ module ActiveRecord
 
   module ConnectionAdapters #:nodoc:
     class RunivedoAdapter < AbstractAdapter
-      attr_reader :session
-      attr_reader :perspective
+      attr_reader :session, :perspective, :url
 
       class Version
         include Comparable
