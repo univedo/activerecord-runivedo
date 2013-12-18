@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "runivedo"
-  spec.add_dependency "activerecord", ">=4.0.0.beta"
+  spec.add_dependency "activerecord", "~>4.0"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "rake"
 end
