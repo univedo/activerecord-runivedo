@@ -64,7 +64,7 @@ module ActiveRecord
 
       def connect
         @session = Runivedo::Connection.new(@url, 0x2610 => "marvin")
-        @session.set_perspective(@uts) if @uts
+        @session.apply_uts(@uts) if @uts
         @perspective = session.get_perspective(@app)
         @connection = @perspective.query
       end
@@ -99,7 +99,7 @@ module ActiveRecord
         }
       end
 
-      # DATABASE STATEMENTS ======================================
+      # DATABASE STATEMENTS ======================================    
 
       def exec_query(sql, name = nil, binds = [])
         log(sql, name, binds) do
