@@ -99,7 +99,7 @@ module ActiveRecord
         }
       end
 
-      # DATABASE STATEMENTS ======================================    
+      # DATABASE STATEMENTS ======================================
 
       def exec_query(sql, name = nil, binds = [])
         log(sql, name, binds) do
@@ -166,7 +166,9 @@ module ActiveRecord
 
       def columns(table_name)
         @perspective.get_tables[table_name].get_fields.map do |name, field|
-          Column.new(name, nil, field.get_sql_datatype)
+          datatype = field.get_sql_datatype
+          datatype = "integer" if datatype == "pk"
+          Column.new(name, nil, datatype)
         end
       end
 
