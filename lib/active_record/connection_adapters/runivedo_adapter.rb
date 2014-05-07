@@ -7,10 +7,10 @@ require 'runivedo'
 module ActiveRecord
   module ConnectionHandling # :nodoc:
     def runivedo_connection(config)
-      raise ArgumentError, "No univedo url specified. Missing argument: url" unless config[:url]
+      raise ArgumentError, "No univedo url specified. Missing argument: server" unless config[:server]
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
-      url = config[:url]
+      url = config[:server]
       app = config[:app]
       uts = config[:uts] ? IO.read(config[:uts]) : nil
       ConnectionAdapters::RunivedoAdapter.new(url, app, uts, logger, config)
