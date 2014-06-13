@@ -59,11 +59,11 @@ module ActiveRecord
       end
 
       def active?
-        @session.open?
+        !@session.closed?
       end
 
       def connect
-        @session = Runivedo::Connection.new(@url, 0x2610 => "marvin")
+        @session = Runivedo::Session.new(@url, username: "marvin")
         @session.apply_uts(@uts) if @uts
         @perspective = session.get_perspective(@app)
         @connection = @perspective.query
@@ -104,7 +104,7 @@ module ActiveRecord
       def exec_query(sql, name = nil, binds = [])
         log(sql, name, binds) do
           stmt    = @connection.prepare(sql)
-          cols    = stmt.get_column_names
+          cols    = stmt.column_names
           i = -1
           binds_hash = Hash[binds.map { |col, val|
             [i += 1, val]
@@ -157,7 +157,7 @@ module ActiveRecord
       # SCHEMA STATEMENTS ========================================
 
       def tables(name = nil, table_name = nil) #:nodoc:
-        @perspective.get_tables.map {|name, table| table.close; name}
+        @perspective.get_tables
       end
 
       def primary_key(table_name)
@@ -165,8 +165,7 @@ module ActiveRecord
       end
 
       def columns(table_name)
-        @perspective.get_tables[table_name].get_fields.map do |name, field|
-          datatype = field.get_sql_datatype
+        @perspective.get_fields_for_table(table_name).map do |name, datatype|
           datatype = "integer" if datatype == "pk"
           Column.new(name, nil, datatype)
         end

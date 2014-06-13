@@ -12,7 +12,7 @@ In your `config/database.yml`:
 
     development:
       adapter: runivedo
-      url: ws://localhost:9000/f8018f09-fb75-4d3d-8e11-44b2dc796130
+      server: ws://localhost:9000/f8018f09-fb75-4d3d-8e11-44b2dc796130
       app: <your app uuid>
       uts: perspective.xml # The file you downloaded before
 

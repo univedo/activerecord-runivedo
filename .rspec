@@ -1,4 +1,0 @@
---color
---format Fuubar
---format RspecJunitFormatter
---out junit.xml
