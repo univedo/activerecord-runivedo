@@ -99,6 +99,17 @@ module ActiveRecord
         }
       end
 
+      # QUOTING ==================================================
+
+      def quote_table_name_for_assignment(table, attr)
+        quote_column_name(attr)
+      end
+
+      def quote_column_name(name) #:nodoc:
+        %Q("#{name.to_s.gsub('"', '""')}")
+      end
+
+
       # DATABASE STATEMENTS ======================================
 
       def exec_query(sql, name = nil, binds = [])
