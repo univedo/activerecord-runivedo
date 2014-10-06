@@ -11,9 +11,10 @@ module ActiveRecord
       raise ArgumentError, "No univedo app specified. Missing argument: app" unless config[:app]
 
       url = config[:server]
+      bucket = config[:bucket]
       app = config[:app]
       uts = config[:uts] ? IO.read(config[:uts]) : nil
-      ConnectionAdapters::RunivedoAdapter.new(url, app, uts, logger, config)
+      ConnectionAdapters::RunivedoAdapter.new(url, bucket, app, uts, logger, config)
     end
   end
 
@@ -37,10 +38,11 @@ module ActiveRecord
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(url, app, uts, logger, config)
+      def initialize(url, bucket, app, uts, logger, config)
         super(nil, logger)
 
         @url = url
+        @bucket = bucket
         @app = app
         @uts = uts
         @result = nil
@@ -63,7 +65,8 @@ module ActiveRecord
       end
 
       def connect
-        @session = Runivedo::Session.new(@url, username: "marvin")
+        @connection = Runivedo::Connection.new(@url)
+        @session = @connection.get_session(@bucket, {})
         @session.apply_uts(@uts) if @uts
         @perspective = session.get_perspective(@app)
         @connection = @perspective.query
