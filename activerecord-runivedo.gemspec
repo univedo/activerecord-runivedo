@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "activerecord-runivedo"
-  spec.version       = "0.3.0"
+  spec.version       = "0.4.0"
   spec.authors       = ["Lucas Clemente"]
   spec.email         = ["lucas@univedo.com"]
   spec.summary       = "ActiveRecord adapter for Univedo"
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "runivedo", "~> 0.3.0"
+  spec.add_dependency "runivedo", "~> 0.4.0"
   spec.add_dependency "activerecord", "~> 4.0"
   spec.add_development_dependency 'minitest'
   spec.add_development_dependency 'minitest-emoji'
