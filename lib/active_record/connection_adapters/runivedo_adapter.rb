@@ -13,8 +13,9 @@ module ActiveRecord
       url = config[:server]
       bucket = config[:bucket]
       app = config[:app]
+      username = config[:username]
       uts = config[:uts] ? IO.read(config[:uts]) : nil
-      ConnectionAdapters::RunivedoAdapter.new(url, bucket, app, uts, logger, config)
+      ConnectionAdapters::RunivedoAdapter.new(url, bucket, app, uts, username, logger, config)
     end
   end
 
@@ -38,13 +39,14 @@ module ActiveRecord
         include Arel::Visitors::BindVisitor
       end
 
-      def initialize(url, bucket, app, uts, logger, config)
+      def initialize(url, bucket, app, uts, username, logger, config)
         super(nil, logger)
 
         @url = url
         @bucket = bucket
         @app = app
         @uts = uts
+        @username = username
         @result = nil
 
         if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
@@ -66,7 +68,7 @@ module ActiveRecord
 
       def connect
         @connection = Runivedo::Connection.new(@url)
-        @session = @connection.get_session(@bucket, {})
+        @session = @connection.get_session(@bucket, {username: @username})
         @session.apply_uts(@uts) if @uts
         @perspective = session.get_perspective(@app)
         @connection = @perspective.query
