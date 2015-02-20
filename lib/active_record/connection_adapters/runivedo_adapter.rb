@@ -5,6 +5,18 @@ require 'arel/visitors/bind_visitor'
 require 'runivedo'
 
 module ActiveRecord
+  module Type
+    class UUID < Type::Value
+      def type
+        :uuid
+      end
+
+      def type_cast_for_database(value)
+        value.to_s
+      end
+    end
+  end
+
   module ConnectionHandling # :nodoc:
     def runivedo_connection(config)
       raise ArgumentError, "No univedo url specified. Missing argument: server" unless config[:server]
@@ -21,19 +33,7 @@ module ActiveRecord
 
   module ConnectionAdapters #:nodoc:
     class RunivedoAdapter < AbstractAdapter
-      attr_reader :session, :perspective, :url
-
-      class Version
-        include Comparable
-
-        def initialize(version_string)
-          @version = version_string.split('.').map { |v| v.to_i }
-        end
-
-        def <=>(version_string)
-          @version <=> version_string.split('.').map { |v| v.to_i }
-        end
-      end
+      attr_reader :session, :perspective, :url, :bucket
 
       class BindSubstitution < Arel::Visitors::SQLite # :nodoc:
         include Arel::Visitors::BindVisitor
@@ -49,11 +49,9 @@ module ActiveRecord
         @username = username
         @result = nil
 
-        if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
-          @visitor = Arel::Visitors::SQLite.new self
-        else
-          @visitor = unprepared_visitor
-        end
+        type_map.register_type 'uuid', Type::UUID.new
+
+        @visitor = Arel::Visitors::SQLite.new self
 
         connect
       end
@@ -100,7 +98,8 @@ module ActiveRecord
           :time        => { :name => "time" },
           :date        => { :name => "date" },
           :binary      => { :name => "blob" },
-          :boolean     => { :name => "boolean" }
+          :boolean     => { :name => "boolean" },
+          :uuid        => { :name => "uuid" },
         }
       end
 
@@ -119,6 +118,9 @@ module ActiveRecord
 
       def exec_query(sql, name = nil, binds = [])
         log(sql, name, binds) do
+          if without_prepared_statement?(binds)
+            binds = []
+          end
           stmt    = @connection.prepare(sql)
           cols    = stmt.column_names
           i = -1
@@ -166,8 +168,8 @@ module ActiveRecord
       end
       alias :create :insert_sql
 
-      def select_rows(sql, name = nil)
-        exec_query(sql, name).rows
+      def select_rows(sql, name = nil, binds = [])
+        exec_query(sql, name, binds).rows
       end
 
       # SCHEMA STATEMENTS ========================================
@@ -181,16 +183,22 @@ module ActiveRecord
       end
 
       def columns(table_name)
-        @perspective.get_fields_for_table(table_name).map do |name, datatype|
-          datatype = "integer" if datatype == "pk"
-          Column.new(name, nil, datatype)
+        @perspective.get_fields_for_table(table_name).map do |name, sql_type|
+          sql_type = "integer" if sql_type == "pk"
+          cast_type = lookup_cast_type(sql_type)
+          Column.new(name, nil, cast_type, sql_type)
         end
       end
 
       protected
 
-      def select(sql, name = nil, binds = []) #:nodoc:
-        exec_query(sql, name, binds)
+      def _type_cast(value)
+        case value
+        when UUIDTools::UUID
+          value.to_s
+        else
+          value
+        end
       end
     end
   end
