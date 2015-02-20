@@ -30,4 +30,11 @@ class SetupTest < MiniTest::Test
     Dummy.create dummy_uuid: uuid
     assert_equal uuid, Dummy.all.last.dummy_uuid
   end
+
+  def test_update
+    d = Dummy.create
+    d.dummy_char = "foobar"
+    d.save
+    assert_equal "foobar", Dummy.all.last.dummy_char
+  end
 end
