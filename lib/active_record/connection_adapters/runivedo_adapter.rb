@@ -49,6 +49,8 @@ module ActiveRecord
 
         @visitor = Arel::Visitors::SQLite.new self
 
+        @prepared_statements = true
+
         connect
       end
 
