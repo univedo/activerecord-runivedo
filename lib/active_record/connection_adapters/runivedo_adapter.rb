@@ -7,10 +7,6 @@ require 'runivedo'
 module ActiveRecord
   module Type
     class UUID < Type::Value
-      def type
-        :uuid
-      end
-
       def type_cast_for_database(value)
         value.to_s
       end
@@ -88,7 +84,7 @@ module ActiveRecord
       def native_database_types #:nodoc:
         {
           :primary_key => default_primary_key_type,
-          :string      => { :name => "varchar", :limit => 255 },
+          :string      => { :name => "varchar" },
           :text        => { :name => "text" },
           :integer     => { :name => "integer" },
           :float       => { :name => "float" },
