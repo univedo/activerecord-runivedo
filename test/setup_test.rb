@@ -41,4 +41,10 @@ class SetupTest < MiniTest::Test
   def test_binary
     d = Dummy.create! dummy_blob: "\0".b
   end
+
+  def test_string
+    s = %Q{foo"bar'baz}
+    Dummy.create! dummy_char: s
+    assert_equal s, Dummy.all.last.dummy_char
+  end
 end
