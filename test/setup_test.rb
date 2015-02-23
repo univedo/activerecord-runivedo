@@ -37,4 +37,8 @@ class SetupTest < MiniTest::Test
     d.save
     assert_equal "foobar", Dummy.all.last.dummy_char
   end
+
+  def test_binary
+    d = Dummy.create! dummy_blob: "\0".b
+  end
 end

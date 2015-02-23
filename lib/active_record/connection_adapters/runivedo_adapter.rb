@@ -188,12 +188,14 @@ module ActiveRecord
 
       protected
 
-      def _type_cast(value)
+      def _quote(value)
         case value
+        when Type::Binary::Data
+          "x'#{value.hex}'"
         when UUIDTools::UUID
-          value.to_s
+          "'#{value.to_s}'"
         else
-          value
+          super
         end
       end
     end
